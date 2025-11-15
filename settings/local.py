@@ -10,3 +10,7 @@ MIDDLEWARE.extend([
 ])
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+STATICFILES_DIRS.extend([
+    #...
+])

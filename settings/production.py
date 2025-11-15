@@ -11,6 +11,10 @@ MIDDLEWARE.extend([
     # Place here your middleware
 ])
 
+STATICFILES_DIRS.extend([
+    #...
+])
+
 
 # ### Security
 

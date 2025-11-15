@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE_PATH = BASE_DIR.parent / ".env"
 SQLITE_FILE_PATH = BASE_DIR / "db.sqlite3"
 COMMON_TEMPLATES_DIR = BASE_DIR / "templates"
+STATICFILES_DIRS = []  # Populate this in "local.py" and/or "production.py"
 STATIC_ROOT = BASE_DIR.parent / "django_projects_static"
 # MEDIA_ROOT = BASE_DIR.parent / "django_projects_media"
 
@@ -70,8 +71,8 @@ USE_TZ = True
 # ### URLs configuration
 
 ALLOWED_HOSTS = config_env("ALLOWED_HOSTS", cast=Csv())
-STATIC_URL = "static/"
-# MEDIA_URL = "media/"
+STATIC_URL = "/static/"
+# MEDIA_URL = "/media/"
 # LOGIN_REDIRECT_URL = "/"
 # LOGOUT_REDIRECT_URL = "/"
 
@@ -103,6 +104,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ### Applications, middlewares and other Django's configuration
 
 WSGI_APPLICATION = "wsgi.application"
+
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 ROOT_URLCONF = "urls"
 
