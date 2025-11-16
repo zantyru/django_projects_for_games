@@ -9,7 +9,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE_PATH = BASE_DIR.parent / ".env"
 SQLITE_FILE_PATH = BASE_DIR / "db.sqlite3"
 COMMON_TEMPLATES_DIR = BASE_DIR / "templates"
-STATICFILES_DIRS = []  # Populate this in "local.py" and/or "production.py"
+STATICFILES_DIRS = [
+    BASE_DIR / "app_dummy_index" / "static",
+]
 STATIC_ROOT = BASE_DIR.parent / "django_projects_static"
 # MEDIA_ROOT = BASE_DIR.parent / "django_projects_media"
 
@@ -116,6 +118,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    # Custom apps
+    "app_dummy_index",
 ]
 
 MIDDLEWARE = [
