@@ -11,6 +11,7 @@ SQLITE_FILE_PATH = BASE_DIR / "db.sqlite3"
 COMMON_TEMPLATES_DIR = BASE_DIR / "templates"
 STATICFILES_DIRS = [
     BASE_DIR / "app_dummy_index" / "static",
+    BASE_DIR / "game_triangle_racer" / "static",
 ]
 STATIC_ROOT = BASE_DIR.parent / "django_projects_static"
 # MEDIA_ROOT = BASE_DIR.parent / "django_projects_media"
@@ -121,6 +122,7 @@ INSTALLED_APPS = [
 
     # Custom apps
     "app_dummy_index",
+    "game_triangle_racer",
 ]
 
 MIDDLEWARE = [
