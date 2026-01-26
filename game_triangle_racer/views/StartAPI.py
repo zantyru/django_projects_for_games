@@ -72,7 +72,6 @@ def _make_response_for_vk(data):
 
             player.start_stamp = start_stamp
             player.session_quasisecret = start_stamp - player.login_stamp
-            player.state = Player.State.GAMING
 
             player.save()
             logger.info(f'A token (game_id = {player.game_id}) has been processed. Response data: {response}')
