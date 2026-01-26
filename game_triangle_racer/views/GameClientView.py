@@ -72,7 +72,6 @@ def _make_response_for_vk(request):
             PlayerResource.objects.bulk_create(player_resources)
 
         player.login_stamp = stamp
-        player.state = Player.State.RECEIVING_TOKEN
         player.save()
 
         response = render(

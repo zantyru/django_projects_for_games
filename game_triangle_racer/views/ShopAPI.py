@@ -115,10 +115,7 @@ class ShopAPI(View):
             else:
                 logger.info(f'Incoming shop request data: {data}. Token \'{token}\'.')
 
-                player = Player.objects.filter(
-                    token=token,
-                    state=Player.State.GAMING  # Player.State.SHOPPING ?
-                ).first()
+                player = Player.objects.filter(token=token).first()
 
                 if player:
                     session_quasisecret = str(player.session_quasisecret)

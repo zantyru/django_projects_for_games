@@ -8,18 +8,11 @@ from .. import helpers
 class Player(models.Model):
     """Represents a player data and state in the game."""
 
-    class State(models.IntegerChoices):
-        NONE = 0
-        RECEIVING_TOKEN = 1
-        GAMING = 2
-        SHOPPING = 3
-
     game_id = models.AutoField(primary_key=True)  #TODO Rename to 'id'
     session_quasisecret = models.BigIntegerField(default=0)
     regin_stamp = models.BigIntegerField(default=0)
     login_stamp = models.BigIntegerField(default=0)
     start_stamp = models.BigIntegerField(default=0)
-    state = models.SmallIntegerField(choices=State.choices, default=State.NONE)
     token = models.CharField(max_length=32, unique=True, default=helpers.default_random_string)  #@TODO Проиндексировать
     token_expiration = models.DateTimeField(default=helpers.datetime_now_utc)
     platform = models.CharField(max_length=16)

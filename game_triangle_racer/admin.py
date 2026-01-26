@@ -41,7 +41,7 @@ class PlayerCostumeInline(TabularInline):
 
 class PlayerTimerInline(TabularInline):
     model = PlayerTimer
-    fields = ('timer', 'start_datetime', 'remaining', 'state', )
+    fields = ('timer', 'start_datetime', 'remaining', )
     extra = 0
 
 
@@ -70,7 +70,7 @@ class PlayerAdmin(ModelAdmin):
             'Параметры сессии',
             {
                 'fields': (
-                    ('token', 'token_expiration', ), 'session_quasisecret', 'state',
+                    ('token', 'token_expiration', ), 'session_quasisecret',
                 ),
             },
         ),

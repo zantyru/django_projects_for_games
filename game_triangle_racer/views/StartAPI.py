@@ -57,8 +57,7 @@ def _make_response_for_vk(data):
     if helpers.is_vk_session_valid(d, vk_app_secure_key):
         player = Player.objects.filter(
             platform=platform,
-            platform_id=platform_id,
-            state=Player.State.RECEIVING_TOKEN
+            platform_id=platform_id
         ).first()
 
         if player:
