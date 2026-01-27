@@ -2,10 +2,10 @@ from django.db import models
 
 
 class Resource(models.Model):
-    """Player's resource types."""
+    """Типы ресурсов игрока (монеты, жизни, звёзды и т.п.)."""
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=16, unique=True, default=str)
+    name = models.CharField(max_length=16, unique=True)
 
     def __str__(self):
         return self.name

@@ -4,11 +4,10 @@ from .PullAPI import PullAPI
 from .PushAPI import PushAPI
 from .ShopAPI import ShopAPI
 
-
 __all__ = [
-    GameClientView,
-    StartAPI,
-    PullAPI,
-    PushAPI,
-    ShopAPI
+    'GameClientView',
+    'StartAPI',
+    'PullAPI',
+    'PushAPI',
+    'ShopAPI',
 ]
