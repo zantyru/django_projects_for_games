@@ -32,15 +32,21 @@ def stamp_to_datetime(s):
 
 
 def stringify(struct):
-
+    """
+    Преобразует структуру данных в строку для вычисления подписи.
+    
+    Важно: порядок элементов в списках и словарях не важен - они сортируются
+    для обеспечения стабильности подписи независимо от порядка передачи.
+    """
     def _(w):
-
         list_of_strings = []
 
         if isinstance(w, list):
+            # Сортируем элементы списка для стабильности подписи
             list_of_strings.extend(['[', *(''.join(_(e)) for e in sorted(w, key=str)), ']'])
 
         elif isinstance(w, dict):
+            # Сортируем ключи словаря для стабильности подписи
             list_of_strings.extend(f'{k}={"".join(_(w[k]))}' for k in sorted(w.keys(), key=str))
 
         else:
@@ -51,13 +57,22 @@ def stringify(struct):
     return ''.join(_(struct))
 
 
-def try_int(value, base=10, default=0):
+def try_int(value, default=0, base=10):
+    """
+    Безопасно преобразует значение в целое число.
+    
+    Сначала пытается преобразовать как строку с указанным основанием,
+    затем как обычное число. В случае ошибки возвращает значение по умолчанию.
+    """
+    if isinstance(value, int):
+        return value
+    
     try:
-        result = int(value, base)  # It works only if the `value` is string
-    except (ValueError, TypeError) as _:
+        result = int(value, base)  # Работает только если value - строка
+    except (ValueError, TypeError):
         try:
             result = int(value)
-        except (ValueError, TypeError) as _:
+        except (ValueError, TypeError):
             result = default
     return result
 

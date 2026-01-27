@@ -1,11 +1,8 @@
 import logging
-from django.views.generic import View
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.http import JsonResponse
 from .. import helpers
 from ..models import Player, ShopSet, ShopSetComponent
 from . import interdata
+from .base_api import BaseJsonSignedAPIView
 
 
 logger = logging.getLogger(__name__)
@@ -89,90 +86,48 @@ logger = logging.getLogger(__name__)
 #
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class ShopAPI(View):
+class ShopAPI(BaseJsonSignedAPIView):
+    """API-эндпоинт для работы с магазином."""
 
-    def post(self, request, token, *args, **kwargs):
+    def handle_request(self, data, player, *args, **kwargs):
+        """Обрабатывает запрос к магазину."""
+        action = data.get('action')
 
-        response = interdata.create_just_failure()
-
-        try:
-            token = bytes.fromhex(token).decode('utf-8')
-        except (ValueError, UnicodeDecodeError):
-            token = ''
-
-        if request.content_type != 'application/json':
-            logger.warning('Pull request rejected: no JSON.')
-            response = interdata.create_only_json_allowed_error()
-
+        if action == 'showAll':
+            response = self.show_all()
+        elif action == 'showSome':
+            n_from = helpers.try_int(data.get('from', -1), -1)
+            n_to = helpers.try_int(data.get('to', -1), -1)
+            response = self.show_some(n_from, n_to)
         else:
-            data = interdata.from_json(request.body)
+            logger.warning(f'Неизвестное действие магазина: {action}')
+            response = interdata.create_just_failure()
 
-            if not data:
-                logger.warning(f'Shop request rejected: wrong JSON: {data}')
-                response = interdata.create_wrong_json_error()
-
-            else:
-                logger.info(f'Incoming shop request data: {data}. Token \'{token}\'.')
-
-                player = Player.objects.filter(token=token).first()
-
-                if player:
-                    session_quasisecret = str(player.session_quasisecret)
-
-                    if interdata.is_signed_well(data, session_quasisecret):
-
-                        action = data.get('action')  #@TODO interdata or shopinterdata
-                        if action == 'showAll':
-                            response = self.show_all()
-
-                        elif action == 'showSome':
-                            n_from = helpers.try_int(data.get('from', -1), -1)
-                            n_to = helpers.try_int(data.get('to', -1), -1)
-                            response = self.show_some(n_from, n_to)
-
-                        ...
-
-                        logger.info(f'Shop request completed: token \'{token}\'. Response data: {response}')
-
-                    else:
-                        logger.warning(
-                            f'Shop request can not be completed:'
-                            f' player with token \'{token}\' has been received wrong signed data {data}.'
-                            f' Response data: {response}'
-                        )
-
-                    interdata.signify(response, session_quasisecret)
-
-                else:
-                    logger.info(f'Shop request can not be completed: player with token \'{token}\' does not exist.'
-                                f' Response data: {response}')
-
-        return JsonResponse(response)
+        logger.info(f'Запрос к магазину выполнен для игрока game_id={player.game_id}, действие: {action}.')
+        return response
 
     @staticmethod
     def show_all():
+        """Возвращает все наборы магазина с оптимизацией запросов."""
+        # Оптимизация: предзагрузка компонентов одним запросом
+        shop_sets_qs = ShopSet.objects.prefetch_related(
+            'shopsetcomponent_set__resource'
+        ).all()
 
-        #@TODO Использовать list и dict comprehension
-
-        shop_sets = []
-
-        for q_shop_set in ShopSet.objects.all():
-            shop_set = {
-                "name": q_shop_set.name,
-                "price": q_shop_set.price,
-                "components": [],
+        shop_sets = [
+            {
+                "name": shop_set.name,
+                "price": shop_set.price,
+                "components": [
+                    {
+                        "name": component.resource.name,
+                        "count": component.count,
+                    }
+                    for component in shop_set.shopsetcomponent_set.all()
+                ],
             }
-
-            components = shop_set["components"]
-            for q_shop_set_component in ShopSetComponent.objects.filter(shop_set=q_shop_set):
-                shop_set_component = {
-                    "name": q_shop_set_component.resource.name,
-                    "count": q_shop_set_component.count,
-                }
-                components.append(shop_set_component)
-
-            shop_sets.append(shop_set)
+            for shop_set in shop_sets_qs
+        ]
 
         return interdata.create_by_extending(
             interdata.create_just_success(),
@@ -184,47 +139,41 @@ class ShopAPI(View):
 
     @staticmethod
     def show_some(n_from, n_to):
-
-        # @TODO Использовать list и dict comprehension
-
-        shop_sets = []
-
-        qs = ShopSet.objects.all()
+        """Возвращает наборы магазина в указанном диапазоне с оптимизацией запросов."""
+        qs = ShopSet.objects.prefetch_related('shopsetcomponent_set__resource')
         shop_sets_count = qs.count()
 
-        if n_from < 0:
-            n_from = 0
+        # Нормализация индексов
+        n_from = max(0, min(n_from, shop_sets_count - 1)) if n_from >= 0 else 0
+        n_to = max(0, min(n_to, shop_sets_count - 1)) if n_to >= 0 else 0
 
-        if n_to < 0:
-            n_to = 0
+        # Меняем местами, если from > to
+        if n_from > n_to:
+            n_from, n_to = n_to, n_from
 
-        if n_from >= shop_sets_count:
-            n_from = shop_sets_count - 1
+        shop_sets_qs = qs.order_by('pk')[n_from:n_to + 1]
 
-        if n_to >= shop_sets_count:
-            n_to = shop_sets_count - 1
-
-        for q_shop_set in qs.order_by('pk')[n_from:n_to+1]:
-            shop_set = {
-                "name": q_shop_set.name,
-                "price": q_shop_set.price,
-                "components": [],
+        shop_sets = [
+            {
+                "name": shop_set.name,
+                "price": shop_set.price,
+                "components": [
+                    {
+                        "name": component.resource.name,
+                        "count": component.count,
+                    }
+                    for component in shop_set.shopsetcomponent_set.all()
+                ],
             }
-
-            components = shop_set["components"]
-            for q_shop_set_component in ShopSetComponent.objects.filter(shop_set=q_shop_set):
-                shop_set_component = {
-                    "name": q_shop_set_component.resource.name,
-                    "count": q_shop_set_component.count,
-                }
-                components.append(shop_set_component)
-
-            shop_sets.append(shop_set)
+            for shop_set in shop_sets_qs
+        ]
 
         return interdata.create_by_extending(
             interdata.create_just_success(),
             **{
-                "shopSetsCount": len(shop_sets),
+                "shopSetsCount": shop_sets_count,
+                "from": n_from,
+                "to": n_to,
                 "shopSets": shop_sets,
             }
         )

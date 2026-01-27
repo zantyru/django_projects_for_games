@@ -33,6 +33,8 @@ PRODUCTION_DATABASE = config_env("PRODUCTION_DATABASE", cast=bool)
 
 # ### Log configuration
 
+LOG_FILE_PATH = config_env("LOG_FILE_PATH", default=str(BASE_DIR / "django_projects.log"))
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -49,7 +51,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'formatter': 'file',
-            'filename': 'django_projects.log',
+            'filename': LOG_FILE_PATH,
         },
     },
     'loggers': {
@@ -120,6 +122,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # Third-party apps
+    "rest_framework",
+
     # Custom apps
     "app_dummy_index",
     "game_triangle_racer",
@@ -168,4 +173,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ### Third-party modules configuration
 
-# ...
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+}
+
+# VK integration settings
+VK_APP_SECURE_KEY = config_env("VK_APP_SECURE_KEY", default="")

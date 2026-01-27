@@ -7,11 +7,11 @@ YES = 1
 NOO = 0
 EMPTY = ''
 
-# Names of sections
-FIELD_0 = '0'  # Common gameplay data for player
-FIELD_R = 'r'  # Player's resources
-FIELD_C = 'c'  # Player's costumes
-FIELD_Z = 'z'  # Player's timers
+# Имена секций в JSON-запросах/ответах
+FIELD_0 = '0'  # Общие игровые данные игрока (уровень и т.п.)
+FIELD_R = 'r'  # Ресурсы игрока
+FIELD_C = 'c'  # Костюмы игрока
+FIELD_Z = 'z'  # Таймеры игрока
 
 # Names of technical fields (no section)
 FIELD_IS_SUCCESS = 'isSuccess'
@@ -34,20 +34,25 @@ PLAYER_LEVEL = 'level'
 
 
 def from_json(json_object):
-
+    """Парсит JSON-строку или bytes. Возвращает словарь или пустой словарь при ошибке."""
     try:
+        if isinstance(json_object, bytes):
+            json_object = json_object.decode('utf-8')
         data = json.loads(json_object)
-
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, UnicodeDecodeError):
         data = {}
-
     return data
 
 
 def signify(struct, secret):
-
+    """
+    Добавляет подпись к структуре данных.
+    
+    Подпись вычисляется как MD5 от строкового представления структуры
+    (через stringify) + секрет. Подпись добавляется в поле 'sig'.
+    """
     if not isinstance(struct, dict):
-        raise ValueError("First parameter must be a dictionary.")
+        raise ValueError("Первый параметр должен быть словарём.")
 
     struct[FIELD_SIGNATURE] = hashlib.md5(
         f'{helpers.stringify(struct)}{secret}'.encode('utf-8')
@@ -59,7 +64,11 @@ def is_successful(struct):
 
 
 def is_signed_well(struct, secret):
-
+    """
+    Проверяет корректность подписи в структуре данных.
+    
+    Вычисляет подпись от структуры без поля 'sig' и сравнивает с полученной подписью.
+    """
     received_sig = struct.get(FIELD_SIGNATURE, '')
     computed_sig = hashlib.md5(
         f'{helpers.stringify({k: v for k, v in struct.items() if k != FIELD_SIGNATURE})}{secret}'.encode('utf-8')
@@ -134,6 +143,15 @@ def create_wrong_json_error():
     }
 
 
+def create_validation_error(error_message):
+    """Создаёт ошибку валидации данных."""
+    return {
+        **create_just_failure(),
+        FIELD_ERROR_CODE: 4,
+        FIELD_ERROR_MESSAGE: error_message,
+    }
+
+
 def create_parameters_is_not_enough_error():
     return {
         **create_just_failure(),
@@ -188,7 +206,16 @@ def get_t(struct):
 
 
 def get_fields_as_lists_or_nones(struct):
-
+    """
+    Извлекает поля из структуры как списки или None.
+    
+    Семантика:
+    - None: поле отсутствует в запросе
+    - []: поле присутствует, но пустое (для костюмов и таймеров означает "вернуть все")
+    - [name1, name2, ...]: список запрошенных имён
+    
+    Возвращает кортеж (field_0, field_r, field_c, field_z).
+    """
     field_names = (
         FIELD_0,
         FIELD_R,
@@ -207,7 +234,22 @@ def get_fields_as_lists_or_nones(struct):
 
 
 def get_fields_as_dictionaries_or_nones(struct):
-
+    """
+    Извлекает поля из структуры как словари или None.
+    
+    Семантика:
+    - None: поле отсутствует в запросе
+    - {}: поле присутствует, но пустое
+    - {key: value, ...}: словарь с данными для обновления
+    
+    Преобразования значений:
+    - FIELD_0: значения как есть
+    - FIELD_R: целые числа >= 0 (количество ресурсов)
+    - FIELD_C: булевы значения (True = добавить/оставить, False = удалить)
+    - FIELD_Z: целые числа >= 0 (время таймеров, обычно игнорируется)
+    
+    Возвращает кортеж (field_0, field_r, field_c, field_z).
+    """
     field_names_fns = {
         FIELD_0: lambda x: x,
         FIELD_R: lambda x: max(helpers.try_int(x), 0),
