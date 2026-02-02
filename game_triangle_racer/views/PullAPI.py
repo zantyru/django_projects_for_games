@@ -1,11 +1,9 @@
 import logging
-from django.views.generic import View
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.http import JsonResponse
-from .. import helpers
-from ..models import Player, PlayerResource, PlayerCostume, PlayerTimer
+from django.db import transaction
+from django.db.models import Prefetch
+from ..models import Player, PlayerResource, PlayerCostume, PlayerTimer, Resource, Costume, Timer
 from . import interdata
+from .base_api import BaseJsonSignedAPIView
 
 
 logger = logging.getLogger(__name__)
@@ -56,75 +54,33 @@ logger = logging.getLogger(__name__)
 #
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class PullAPI(View):
-    """An API endpoint for retrieving game information from server."""
+class PullAPI(BaseJsonSignedAPIView):
+    """API-эндпоинт для получения игровой информации с сервера."""
 
-    def post(self, request, token, *args, **kwargs):
+    def handle_request(self, data, player, *args, **kwargs):
+        """Обрабатывает запрос на получение данных игрока."""
+        (
+            input_fields_0,
+            input_fields_r,
+            input_fields_c,
+            input_fields_z,
+        ) = interdata.get_fields_as_lists_or_nones(data)
 
-        response = interdata.create_just_failure()
+        output_fields_0 = self.read_player_common_data(player, input_fields_0)
+        output_fields_r = self.read_player_resources(player, input_fields_r)
+        output_fields_c = self.read_player_costumes(player, input_fields_c)
+        output_fields_z = self.read_player_timers(player, [] if input_fields_z is None else input_fields_z)
 
-        try:
-            token = bytes.fromhex(token).decode('utf-8')
-        except (ValueError, UnicodeDecodeError):
-            token = ''
+        response = interdata.create_by_field_compositing(
+            interdata.create_just_success(),
+            field_0=output_fields_0,
+            field_r=output_fields_r,
+            field_c=output_fields_c,
+            field_z=output_fields_z,
+        )
 
-        if request.content_type != 'application/json':
-            logger.warning('Pull request rejected: no JSON.')
-            response = interdata.create_only_json_allowed_error()
-
-        else:
-            data = interdata.from_json(request.body)
-
-            if not data:
-                logger.warning(f'Pull request rejected: wrong JSON: {data}')
-                response = interdata.create_wrong_json_error()
-
-            else:
-                logger.info(f'Incoming pull request data: {data}. Token \'{token}\'.')
-
-                player = Player.objects.filter(token=token).first()
-
-                if player:
-                    session_quasisecret = str(player.session_quasisecret)
-
-                    if interdata.is_signed_well(data, session_quasisecret):
-                        (
-                            input_fields_0,
-                            input_fields_r,
-                            input_fields_c,
-                            input_fields_z,
-                        ) = interdata.get_fields_as_lists_or_nones(data)
-
-                        output_fields_0 = self.read_player_common_data(player, input_fields_0)
-                        output_fields_r = self.read_player_resources(player, input_fields_r)
-                        output_fields_c = self.read_player_costumes(player, input_fields_c)
-                        output_fields_z = self.read_player_timers(player, [] if input_fields_z is None else input_fields_z)  #@DEBUG
-
-                        response = interdata.create_by_field_compositing(
-                            interdata.create_just_success(),
-                            field_0=output_fields_0,
-                            field_r=output_fields_r,
-                            field_c=output_fields_c,
-                            field_z=output_fields_z,
-                        )
-
-                        logger.info(f'Pull request completed: token \'{token}\'. Response data: {response}')
-
-                    else:
-                        logger.warning(
-                            f'Pull request can not be completed:'
-                            f' player with token \'{token}\' has been received wrong signed data {data}.'
-                            f' Response data: {response}'
-                        )
-
-                    interdata.signify(response, session_quasisecret)
-
-                else:
-                    logger.info(f'Pull request can not be completed: player with token \'{token}\' does not exist.'
-                                f' Response data: {response}')
-
-        return JsonResponse(response)
+        logger.info(f'Запрос на получение данных выполнен для игрока game_id={player.game_id}.')
+        return response
 
     @staticmethod
     def read_player_common_data(player, input_fields_0):
@@ -142,76 +98,108 @@ class PullAPI(View):
 
     @staticmethod
     def read_player_resources(player, input_fields_r):
-
+        """Читает ресурсы игрока одним запросом."""
         if input_fields_r is None:
             return None
 
-        output_fields_r = {}
-        for e in input_fields_r:
-            player_resource = PlayerResource.objects.filter(
-                player=player,
-                resource__name=e
-            ).first()
-            output_fields_r[e] = player_resource.count if player_resource else 0
+        # Оптимизация: один запрос вместо N запросов
+        player_resources = PlayerResource.objects.filter(
+            player=player,
+            resource__name__in=input_fields_r
+        ).select_related('resource')
+
+        resource_dict = {pr.resource.name: pr.count for pr in player_resources}
+        output_fields_r = {name: resource_dict.get(name, 0) for name in input_fields_r}
 
         return output_fields_r
 
     @staticmethod
     def read_player_costumes(player, input_fields_c):
-
+        """Читает костюмы игрока. Если список пуст ([]), возвращает все костюмы."""
         if input_fields_c is None:
             return None
 
-        if input_fields_c:  # Can be []. It is necessary to distinguish between [] and None
-            output_fields_c = {}
-            for e in input_fields_c:
-                player_costume = PlayerCostume.objects.filter(
-                    player=player,
-                    costume__name=e
-                ).first()
-                output_fields_c[e] = bool(player_costume)
-        else:  # @TEST_IT
-            output_fields_c = {
-                player_costume.costume.name: True
-                for player_costume in PlayerCostume.objects.filter(player=player)
-            }
+        if input_fields_c:
+            # Запрошены конкретные костюмы
+            player_costumes = PlayerCostume.objects.filter(
+                player=player,
+                costume__name__in=input_fields_c
+            ).select_related('costume')
+
+            costume_names = {pc.costume.name for pc in player_costumes}
+            output_fields_c = {name: name in costume_names for name in input_fields_c}
+        else:
+            # Пустой список означает "вернуть все костюмы игрока"
+            player_costumes = PlayerCostume.objects.filter(player=player).select_related('costume')
+            output_fields_c = {pc.costume.name: True for pc in player_costumes}
 
         return output_fields_c
 
     @staticmethod
     def read_player_timers(player, input_fields_z):
-
+        """Читает таймеры игрока. Обновляет их состояние и удаляет истёкшие."""
         if input_fields_z is None:
             return None
 
-        if input_fields_z:  # Can be []. It is necessary to distinguish between [] and None
-            output_fields_z = {}
-            for e in input_fields_z:
-                player_timer = PlayerTimer.objects.filter(
+        if input_fields_z:
+            # Запрошены конкретные таймеры
+            with transaction.atomic():
+                player_timers = PlayerTimer.objects.filter(
                     player=player,
-                    timer__name=e
-                ).first()
-                if player_timer:
+                    timer__name__in=input_fields_z
+                ).select_related('timer').select_for_update()
+
+                # Обновляем все таймеры
+                timers_to_update = []
+                timers_to_delete = []
+                output_fields_z = {}
+
+                for player_timer in player_timers:
                     player_timer.update()
-                    if player_timer.state != PlayerTimer.State.PLANNED:
-                        output_fields_z[e] = player_timer.remaining
                     if player_timer.state == PlayerTimer.State.EXPIRED:
-                        player_timer.delete()
-        else:  #@TEST_IT  #@REFACTOR
+                        timers_to_delete.append(player_timer.pk)
+                    elif player_timer.state != PlayerTimer.State.PLANNED:
+                        output_fields_z[player_timer.timer.name] = player_timer.remaining
+                        timers_to_update.append(player_timer)
 
-            player_timers = PlayerTimer.objects.filter(player=player)
+                # Пакетные операции
+                if timers_to_update:
+                    PlayerTimer.objects.bulk_update(timers_to_update, ['state', 'remaining', 'start_datetime'])
+                if timers_to_delete:
+                    PlayerTimer.objects.filter(pk__in=timers_to_delete).delete()
 
-            for player_timer in player_timers:
-                player_timer.update()
+                # Добавляем нули для запрошенных, но не найденных таймеров
+                found_names = {pt.timer.name for pt in player_timers}
+                for name in input_fields_z:
+                    if name not in found_names:
+                        output_fields_z[name] = 0
 
-            output_fields_z = {
-                player_timer.timer.name: player_timer.remaining
-                for player_timer in player_timers
-                if player_timer.state != PlayerTimer.State.PLANNED
-            }
+        else:
+            # Пустой список означает "вернуть все таймеры игрока"
+            with transaction.atomic():
+                player_timers = PlayerTimer.objects.filter(player=player).select_related('timer').select_for_update()
 
-            for player_timer in player_timers:
-                if player_timer.state == PlayerTimer.State.EXPIRED:
-                    player_timer.delete()
+                # Обновляем все таймеры
+                timers_to_update = []
+                timers_to_delete = []
+
+                for player_timer in player_timers:
+                    player_timer.update()
+                    if player_timer.state == PlayerTimer.State.EXPIRED:
+                        timers_to_delete.append(player_timer.pk)
+                    else:
+                        timers_to_update.append(player_timer)
+
+                # Пакетные операции
+                if timers_to_update:
+                    PlayerTimer.objects.bulk_update(timers_to_update, ['state', 'remaining', 'start_datetime'])
+                if timers_to_delete:
+                    PlayerTimer.objects.filter(pk__in=timers_to_delete).delete()
+
+                output_fields_z = {
+                    player_timer.timer.name: player_timer.remaining
+                    for player_timer in player_timers
+                    if player_timer.state != PlayerTimer.State.PLANNED
+                }
 
         return output_fields_z

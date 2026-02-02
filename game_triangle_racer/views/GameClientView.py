@@ -1,4 +1,6 @@
 import logging
+from django.conf import settings
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
@@ -20,11 +22,12 @@ class GameClientView(View):
     def get(self, request, *args, **kwargs):
 
         referrer_domain = helpers.get_request_referrer_domain(request)
-        logger.info(f'Game client has been requested: a referrer (domain) is "{referrer_domain}".')
+        logger.info(f'Запрос игрового клиента: домен реферера "{referrer_domain}".')
 
-        #@DEBUG +
-        referrer_domain = 'vk.com'
-        #@DEBUG -
+        # В режиме отладки разрешаем любой домен
+        if settings.DEBUG and not referrer_domain:
+            referrer_domain = 'vk.com'
+            logger.debug('Режим отладки: установлен домен vk.com по умолчанию.')
 
         if referrer_domain == 'vk.com':
             logger.info(f'"{referrer_domain}" is permitted domain.')
@@ -38,8 +41,12 @@ class GameClientView(View):
 
 
 def _make_response_for_vk(request):
+    """Формирует ответ для VK платформы."""
+    vk_app_secure_key = settings.VK_APP_SECURE_KEY
+    if not vk_app_secure_key:
+        logger.error('VK_APP_SECURE_KEY не настроен в settings.')
+        return HttpResponse()
 
-    vk_app_secure_key = 'kFPuJIHCmuDuicPwprtP'  # @TODO Put all data in DB #@SMELL
     urlvars_as_dict = request.GET.dict()
 
     platform = 'vk.com'
@@ -47,32 +54,39 @@ def _make_response_for_vk(request):
 
     if helpers.is_vk_session_valid(urlvars_as_dict, vk_app_secure_key) and helpers.try_int(platform_id) > 0:
 
-        logger.info(f'Request passed! VK session credentials is valid. User {platform_id}.')
+        logger.info(f'Запрос принят: VK сессия валидна. Пользователь {platform_id}.')
 
         stamp = helpers.datetime_to_stamp(helpers.datetime_now_utc())
 
-        player = Player.objects.filter(
-            platform=platform,
-            platform_id=platform_id
-        ).first()
-
-        if not player:
-            logger.info(f'User {platform_id} is a new player! Registering...')
-            player = Player.objects.create(
+        with transaction.atomic():
+            # Используем select_for_update для защиты от race conditions при создании игрока
+            player = Player.objects.filter(
                 platform=platform,
-                platform_id=platform_id,
-                regin_stamp=stamp
-            )
+                platform_id=platform_id
+            ).select_for_update().first()
 
-            player_resources = []
-            for row in ConfigOfInitialPlayerResource.objects.all().iterator():
-                player_resources.append(
-                    PlayerResource(player=player, resource=row.resource, count=row.initial_count)
+            if not player:
+                logger.info(f'Пользователь {platform_id} - новый игрок. Регистрация...')
+                player = Player.objects.create(
+                    platform=platform,
+                    platform_id=platform_id,
+                    regin_stamp=stamp
                 )
-            PlayerResource.objects.bulk_create(player_resources)
 
-        player.login_stamp = stamp
-        player.save()
+                player_resources = []
+                for row in ConfigOfInitialPlayerResource.objects.all().iterator():
+                    player_resources.append(
+                        PlayerResource(player=player, resource=row.resource, count=row.initial_count)
+                    )
+                if player_resources:
+                    try:
+                        PlayerResource.objects.bulk_create(player_resources)
+                    except IntegrityError as e:
+                        logger.error(f'Ошибка при создании начальных ресурсов для игрока {player.platform_id}: {e}')
+                        raise
+
+            player.login_stamp = stamp
+            player.save(update_fields=['login_stamp'])
 
         response = render(
             request, 'game_triangle_racer/triangle_racer.html',
@@ -84,7 +98,7 @@ def _make_response_for_vk(request):
 
     else:
 
-        logger.warning(f'Request rejected! VK session credentials is NOT valid.')
+        logger.warning('Запрос отклонён: VK сессия не валидна.')
 
         response = HttpResponse()
 

@@ -2,11 +2,11 @@ from django.db import models
 
 
 class ShopSetComponent(models.Model):
-    """ """
+    """Компонент набора магазина - ресурс и его количество в наборе."""
 
-    shop_set = models.ForeignKey('ShopSet', on_delete=models.CASCADE)
+    shop_set = models.ForeignKey('ShopSet', on_delete=models.CASCADE, related_name='shopsetcomponent_set')
     resource = models.ForeignKey('Resource', on_delete=models.CASCADE)
-    count = models.PositiveSmallIntegerField(default=1)
+    count = models.PositiveSmallIntegerField(default=1, help_text="Количество ресурса в наборе")
 
     class Meta:
         constraints = (
@@ -15,4 +15,4 @@ class ShopSetComponent(models.Model):
         )
 
     def __str__(self):
-        return self.resource.__str__()
+        return f"{self.shop_set.name} - {self.resource.name} x {self.count}"
