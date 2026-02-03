@@ -1,8 +1,8 @@
-from .GameClientView import GameClientView
-from .StartAPI import StartAPI
-from .PullAPI import PullAPI
-from .PushAPI import PushAPI
-from .ShopAPI import ShopAPI
+from django_projects.game_triangle_racer.views.GameClientView import GameClientView
+from django_projects.game_triangle_racer.views.StartAPI import StartAPI
+from django_projects.game_triangle_racer.views.PullAPI import PullAPI
+from django_projects.game_triangle_racer.views.PushAPI import PushAPI
+from django_projects.game_triangle_racer.views.ShopAPI import ShopAPI
 
 __all__ = [
     'GameClientView',

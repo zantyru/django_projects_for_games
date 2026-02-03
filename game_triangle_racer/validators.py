@@ -1,7 +1,7 @@
 """Валидаторы для проверки игровых данных."""
 
 import logging
-from ..models.Config import Config
+from django_projects.game_triangle_racer.models.Config import Config
 
 logger = logging.getLogger(__name__)
 

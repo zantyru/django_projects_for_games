@@ -4,9 +4,9 @@ from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .. import helpers
-from ..models import Player
-from . import interdata
+from django_projects.game_triangle_racer import helpers
+from django_projects.game_triangle_racer.models import Player
+from django_projects.game_triangle_racer.views import interdata
 
 
 logger = logging.getLogger(__name__)

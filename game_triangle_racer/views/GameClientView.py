@@ -5,8 +5,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
 from django.views.decorators.clickjacking import xframe_options_exempt
-from .. import helpers
-from ..models import (
+from django_projects.game_triangle_racer import helpers
+from django_projects.game_triangle_racer.models import (
     Player, Resource, Costume, PlayerResource, PlayerCostume,
     ConfigOfInitialPlayerResource, ConfigOfInitialPlayerCostume
 )

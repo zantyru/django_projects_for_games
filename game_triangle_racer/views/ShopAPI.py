@@ -1,8 +1,8 @@
 import logging
-from .. import helpers
-from ..models import Player, ShopSet, ShopSetComponent
-from . import interdata
-from .base_api import BaseJsonSignedAPIView
+from django_projects.game_triangle_racer import helpers
+from django_projects.game_triangle_racer.models import Player, ShopSet, ShopSetComponent
+from django_projects.game_triangle_racer.views import interdata
+from django_projects.game_triangle_racer.views.base_api import BaseJsonSignedAPIView
 
 
 logger = logging.getLogger(__name__)

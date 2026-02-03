@@ -1,6 +1,6 @@
 import json
 import hashlib
-from .. import helpers
+from django_projects.game_triangle_racer import helpers
 
 
 YES = 1
