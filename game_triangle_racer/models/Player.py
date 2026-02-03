@@ -2,7 +2,7 @@ import os
 import base64
 from datetime import timedelta
 from django.db import models
-from django_projects.game_triangle_racer import helpers
+from game_triangle_racer import helpers
 
 
 class Player(models.Model):

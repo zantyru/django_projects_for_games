@@ -1,5 +1,5 @@
 from django.contrib.admin import AdminSite, ModelAdmin, TabularInline
-from django_projects.game_triangle_racer.models import (
+from game_triangle_racer.models import (
     Config,
     ConfigOfInitialPlayerResource,
     ConfigOfInitialPlayerCostume,

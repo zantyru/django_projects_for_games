@@ -1,6 +1,6 @@
 from django.urls import path
-from django_projects.game_triangle_racer.admin import admin_site
-from django_projects.game_triangle_racer import views
+from game_triangle_racer.admin import admin_site
+from game_triangle_racer import views
 
 
 app_name = "game_triangle_racer"

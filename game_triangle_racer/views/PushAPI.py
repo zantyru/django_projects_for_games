@@ -1,9 +1,9 @@
 import logging
 from django.db import transaction, IntegrityError
-from django_projects.game_triangle_racer.models import Player, PlayerResource, PlayerCostume, Costume, Resource
-from django_projects.game_triangle_racer import validators
-from django_projects.game_triangle_racer.views import interdata
-from django_projects.game_triangle_racer.views.base_api import BaseJsonSignedAPIView
+from game_triangle_racer.models import Player, PlayerResource, PlayerCostume, Costume, Resource
+from game_triangle_racer import validators
+from game_triangle_racer.views import interdata
+from game_triangle_racer.views.base_api import BaseJsonSignedAPIView
 
 
 logger = logging.getLogger(__name__)

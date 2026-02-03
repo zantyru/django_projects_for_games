@@ -1,5 +1,5 @@
 from django.db import models
-from django_projects.game_triangle_racer import helpers
+from game_triangle_racer import helpers
 
 
 class PlayerTimer(models.Model):

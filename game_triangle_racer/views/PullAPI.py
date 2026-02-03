@@ -1,9 +1,9 @@
 import logging
 from django.db import transaction
 from django.db.models import Prefetch
-from django_projects.game_triangle_racer.models import Player, PlayerResource, PlayerCostume, PlayerTimer, Resource, Costume, Timer
-from django_projects.game_triangle_racer.views import interdata
-from django_projects.game_triangle_racer.views.base_api import BaseJsonSignedAPIView
+from game_triangle_racer.models import Player, PlayerResource, PlayerCostume, PlayerTimer, Resource, Costume, Timer
+from game_triangle_racer.views import interdata
+from game_triangle_racer.views.base_api import BaseJsonSignedAPIView
 
 
 logger = logging.getLogger(__name__)
