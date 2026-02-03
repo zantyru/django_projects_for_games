@@ -6,6 +6,7 @@ from decouple import Config, RepositoryEnv, Csv
 # ### Paths for files and directories
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_LOG_FILE_PATH = BASE_DIR / "django_projects.log"
 ENV_FILE_PATH = BASE_DIR.parent / ".env"
 SQLITE_FILE_PATH = BASE_DIR / "db.sqlite3"
 COMMON_TEMPLATES_DIR = BASE_DIR / "templates"
@@ -25,15 +26,17 @@ except FileNotFoundError:
 
 # ### Main flags and secrets
 
-SECRET_KEY = config_env("SECRET_KEY")
 DEBUG = config_env("DEBUG", cast=bool)
 TEMPLATE_DEBUG = DEBUG
+LOG_FILE_PATH = config_env("LOG_FILE_PATH", default=str(DEFAULT_LOG_FILE_PATH))
+SECRET_KEY = config_env("SECRET_KEY")
 PRODUCTION_DATABASE = config_env("PRODUCTION_DATABASE", cast=bool)
+
+# VK integration settings
+VK_APP_SECURE_KEY = config_env("VK_APP_SECURE_KEY", default="")
 
 
 # ### Log configuration
-
-LOG_FILE_PATH = config_env("LOG_FILE_PATH", default=str(BASE_DIR / "django_projects.log"))
 
 LOGGING = {
     'version': 1,
@@ -181,6 +184,3 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
     ],
 }
-
-# VK integration settings
-VK_APP_SECURE_KEY = config_env("VK_APP_SECURE_KEY", default="")
