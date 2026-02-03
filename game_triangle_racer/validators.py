@@ -1,14 +1,16 @@
 """Валидаторы для проверки игровых данных."""
 
+
 import logging
 from game_triangle_racer.models.Config import Config
 
-logger = logging.getLogger(__name__)
 
 # Константы валидации (можно переопределить через Config модель)
 MAX_LEVEL = 9999
 MAX_RESOURCE_COUNT = 999999999
 MIN_RESOURCE_COUNT = 0
+
+logger = logging.getLogger(__name__)
 
 
 def validate_level(level):
