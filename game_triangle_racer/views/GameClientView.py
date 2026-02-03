@@ -1,6 +1,7 @@
 import logging
 from django.conf import settings
 from django.db import transaction
+from django.db.utils import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
