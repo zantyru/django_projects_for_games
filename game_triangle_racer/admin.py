@@ -1,4 +1,5 @@
-from django.contrib.admin import AdminSite, ModelAdmin, TabularInline
+from django.contrib import admin
+from django.contrib.admin import ModelAdmin, TabularInline
 from game_triangle_racer.models import (
     Config,
     ConfigOfInitialPlayerResource,
@@ -13,10 +14,6 @@ from game_triangle_racer.models import (
     ShopSet,
     ShopSetComponent,
 )
-
-
-class GameTriangleRacerAdminSite(AdminSite):
-    site_header = 'Triangle Racer'
 
 
 class ConfigOfInitialPlayerResourceAdmin(ModelAdmin):
@@ -113,16 +110,15 @@ class ShopSetAdmin(ModelAdmin):
     inlines = [ShopSetComponentInline]
 
 
-admin_site = GameTriangleRacerAdminSite(name='game_triangle_racer_admin')
-admin_site.register(Config)
-admin_site.register(ConfigOfInitialPlayerResource, ConfigOfInitialPlayerResourceAdmin)
-admin_site.register(ConfigOfInitialPlayerCostume, ConfigOfInitialPlayerCostumeAdmin)
-admin_site.register(Player, PlayerAdmin)
-admin_site.register(Resource)
-admin_site.register(Costume)
-admin_site.register(Timer, TimerAdmin)
-# admin_site.register(PlayerResource)
-# admin_site.register(PlayerCostume)
-# admin_site.register(PlayerTimer)
-admin_site.register(ShopSet, ShopSetAdmin)
-# admin_site.register(ShopSetComponent)
+admin.site.register(Config)
+admin.site.register(ConfigOfInitialPlayerResource, ConfigOfInitialPlayerResourceAdmin)
+admin.site.register(ConfigOfInitialPlayerCostume, ConfigOfInitialPlayerCostumeAdmin)
+admin.site.register(Player, PlayerAdmin)
+admin.site.register(Resource)
+admin.site.register(Costume)
+admin.site.register(Timer, TimerAdmin)
+# admin.site.register(PlayerResource)
+# admin.site.register(PlayerCostume)
+# admin.site.register(PlayerTimer)
+admin.site.register(ShopSet, ShopSetAdmin)
+# admin.site.register(ShopSetComponent)

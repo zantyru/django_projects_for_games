@@ -1,11 +1,12 @@
 from django.urls import path
-from game_triangle_racer.admin import admin_site
+#from game_triangle_racer.admin import admin_site
 from game_triangle_racer import views
 
 
 app_name = "game_triangle_racer"
 
 urlpatterns = [
+    #path('admin/', admin_site.urls),
     path('', views.GameClientView.as_view(), name='client'),
     path('api/start/', views.StartAPI.as_view(), name='api-start'),
     path('api/pull/<str:token>/', views.PullAPI.as_view(), name='api-pull'),
