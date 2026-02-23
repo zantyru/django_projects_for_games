@@ -43,18 +43,20 @@ def stringify(struct):
 
         if isinstance(w, list):
             # Сортируем элементы списка для стабильности подписи
-            list_of_strings.extend(['[', *(''.join(_(e)) for e in sorted(w, key=str)), ']'])
+            strings = (','.join(_(e)) for e in sorted(w, key=str))
+            list_of_strings.extend(['[', *sorted(strings, key=str), ']'])
 
         elif isinstance(w, dict):
             # Сортируем ключи словаря для стабильности подписи
-            list_of_strings.extend(f'{k}={"".join(_(w[k]))}' for k in sorted(w.keys(), key=str))
+            strings = (f'{k}={",".join(_(w[k]))}' for k in sorted(w.keys(), key=str))
+            list_of_strings.extend(sorted(strings))
 
         else:
             list_of_strings.append(str(w))
 
         return list_of_strings
 
-    return ''.join(_(struct))
+    return ','.join(_(struct))
 
 
 def try_int(value, default=0, base=10):
