@@ -8,6 +8,7 @@ from game_triangle_racer.models import (
     Resource,
     Costume,
     Timer,
+    ResourceCollection,
     PlayerResource,
     PlayerCostume,
     PlayerTimer,
@@ -117,6 +118,7 @@ admin.site.register(Player, PlayerAdmin)
 admin.site.register(Resource)
 admin.site.register(Costume)
 admin.site.register(Timer, TimerAdmin)
+admin.site.register(ResourceCollection)
 # admin.site.register(PlayerResource)
 # admin.site.register(PlayerCostume)
 # admin.site.register(PlayerTimer)
