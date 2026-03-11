@@ -5,7 +5,6 @@ from game_triangle_racer.models.Player import Player
 from game_triangle_racer.models.Resource import Resource
 from game_triangle_racer.models.Costume import Costume
 from game_triangle_racer.models.Timer import Timer
-from game_triangle_racer.models.ResourceCollection import ResourceCollection
 from game_triangle_racer.models.PlayerResource import PlayerResource
 from game_triangle_racer.models.PlayerCostume import PlayerCostume
 from game_triangle_racer.models.PlayerTimer import PlayerTimer
@@ -21,7 +20,6 @@ __all__ = [
     "Resource",
     "Costume",
     "Timer",
-    "ResourceCollection",
     "PlayerResource",
     "PlayerCostume",
     "PlayerTimer",
