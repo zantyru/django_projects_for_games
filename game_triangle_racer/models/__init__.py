@@ -8,6 +8,7 @@ from game_triangle_racer.models.Timer import Timer
 from game_triangle_racer.models.PlayerResource import PlayerResource
 from game_triangle_racer.models.PlayerCostume import PlayerCostume
 from game_triangle_racer.models.PlayerTimer import PlayerTimer
+from game_triangle_racer.models.ShopPriceComponent import ShopPriceComponent
 from game_triangle_racer.models.ShopSet import ShopSet
 from game_triangle_racer.models.ShopSetComponent import ShopSetComponent
 
@@ -23,6 +24,7 @@ __all__ = [
     "PlayerResource",
     "PlayerCostume",
     "PlayerTimer",
+    "ShopPriceComponent",
     "ShopSet",
     "ShopSetComponent",
 ]
