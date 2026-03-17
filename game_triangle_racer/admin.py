@@ -11,6 +11,7 @@ from game_triangle_racer.models import (
     PlayerResource,
     PlayerCostume,
     PlayerTimer,
+    ShopPriceComponent,
     ShopSet,
     ShopSetComponent,
 )
@@ -97,14 +98,19 @@ class TimerAdmin(ModelAdmin):
 
 # ShopSetAdmin
 
+class ShopPriceComponentInline(TabularInline):
+    model = ShopPriceComponent
+    extra = 0
+
+
 class ShopSetComponentInline(TabularInline):
     model = ShopSetComponent
     extra = 0
 
 
 class ShopSetAdmin(ModelAdmin):
-    list_display = ('name', 'price', )
-    list_filter = ('price', )
+    list_display = ('name', )
+    #list_filter = ('price', )
 
     fieldsets = (
         (
@@ -115,17 +121,9 @@ class ShopSetAdmin(ModelAdmin):
                 ),
             },
         ),
-        (
-            'Цена',
-            {
-                'fields': (
-                    'price',
-                ),
-            }
-        ),
     )
 
-    inlines = [ShopSetComponentInline]
+    inlines = [ShopPriceComponentInline, ShopSetComponentInline]
 
 
 admin.site.register(Config)
