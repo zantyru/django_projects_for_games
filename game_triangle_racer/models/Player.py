@@ -46,6 +46,7 @@ class Player(models.Model):
     timers = models.ManyToManyField('Timer', through='PlayerTimer')
 
     class Meta:
+
         indexes = [
             models.Index(fields=['platform', 'platform_id'], name='player_platform_idx'),
         ]
@@ -57,6 +58,7 @@ class Player(models.Model):
     def get_token(self, expires_in=3600):
 
         utcnow = helpers.datetime_now_utc()
+
         if self.token and self.token_expiration > utcnow + timedelta(seconds=60):
             return self.token
 
@@ -68,6 +70,7 @@ class Player(models.Model):
 
     def revoke_token(self):
         """Отзывает токен игрока, устанавливая срок действия в прошлое."""
+
         utcnow = helpers.datetime_now_utc()
         self.token_expiration = utcnow - timedelta(seconds=1)
         self.save(update_fields=['token_expiration'])
@@ -75,10 +78,12 @@ class Player(models.Model):
     @staticmethod
     def get_player_by_token(token):
         """Возвращает игрока по токену, если токен валиден и не истёк."""
+
         player = Player.objects.filter(token=token).first()
 
         if player:
             utcnow = helpers.datetime_now_utc()
+
             if player.token_expiration < utcnow:
                 player = None
 
@@ -87,8 +92,11 @@ class Player(models.Model):
     @staticmethod
     def get_player_by_token_from_hex(hex_token):
         """Декодирует hex-токен из URL и возвращает игрока."""
+
         try:
             token = bytes.fromhex(hex_token).decode('utf-8')
+
         except (ValueError, UnicodeDecodeError):
             return None
+
         return Player.get_player_by_token(token)

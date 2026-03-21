@@ -35,12 +35,16 @@ PLAYER_LEVEL = 'level'
 
 def from_json(json_object):
     """Парсит JSON-строку или bytes. Возвращает словарь или пустой словарь при ошибке."""
+
     try:
         if isinstance(json_object, bytes):
             json_object = json_object.decode('utf-8')
+
         data = json.loads(json_object)
+
     except (json.JSONDecodeError, UnicodeDecodeError):
         data = {}
+
     return data
 
 
@@ -51,6 +55,7 @@ def signify(struct, secret):
     Подпись вычисляется как MD5 от строкового представления структуры
     (через stringify) + секрет. Подпись добавляется в поле 'sig'.
     """
+
     if not isinstance(struct, dict):
         raise ValueError("Первый параметр должен быть словарём.")
 
@@ -60,6 +65,7 @@ def signify(struct, secret):
 
 
 def is_successful(struct):
+
     return struct.get(FIELD_IS_SUCCESS, NOO) == YES
 
 
@@ -69,6 +75,7 @@ def is_signed_well(struct, secret):
     
     Вычисляет подпись от структуры без поля 'sig' и сравнивает с полученной подписью.
     """
+
     received_sig = struct.get(FIELD_SIGNATURE, '')
     computed_sig = hashlib.md5(
         f'{helpers.stringify({k: v for k, v in struct.items() if k != FIELD_SIGNATURE})}{secret}'.encode('utf-8')
@@ -81,10 +88,12 @@ def is_signed_well(struct, secret):
 
 
 def create(**kwargs):
+
     return {**kwargs}  # Copying (light version)
 
 
 def create_by_extending(struct, **kwargs):
+
     return {**struct, **kwargs}
 
 
@@ -108,18 +117,21 @@ def create_by_field_compositing(struct, field_0=None, field_r=None, field_c=None
 
 
 def create_just_success():
+
     return {
         FIELD_IS_SUCCESS: YES,
     }
 
 
 def create_just_failure():
+
     return {
         FIELD_IS_SUCCESS: NOO,
     }
 
 
 def create_unrecognized_error():
+
     return {
         **create_just_failure(),
         FIELD_ERROR_CODE: 0,
@@ -128,6 +140,7 @@ def create_unrecognized_error():
 
 
 def create_only_json_allowed_error():
+
     return {
         **create_just_failure(),
         FIELD_ERROR_CODE: 1,
@@ -136,6 +149,7 @@ def create_only_json_allowed_error():
 
 
 def create_wrong_json_error():
+
     return {
         **create_just_failure(),
         FIELD_ERROR_CODE: 2,
@@ -145,6 +159,7 @@ def create_wrong_json_error():
 
 def create_validation_error(error_message):
     """Создаёт ошибку валидации данных."""
+
     return {
         **create_just_failure(),
         FIELD_ERROR_CODE: 4,
@@ -153,6 +168,7 @@ def create_validation_error(error_message):
 
 
 def create_parameters_is_not_enough_error():
+
     return {
         **create_just_failure(),
         FIELD_ERROR_CODE: 3,
@@ -161,6 +177,7 @@ def create_parameters_is_not_enough_error():
 
 
 def create_player_already_exists_error():
+
     return {
         **create_just_failure(),
         FIELD_ERROR_CODE: 101,
@@ -172,22 +189,27 @@ def create_player_already_exists_error():
 
 
 def get_platform(struct):
+
     return str(struct.get(FIELD_PLATFORM, EMPTY))
 
 
 def get_platform_id(struct):
+
     return str(struct.get(FIELD_PLATFORM_ID, EMPTY))
 
 
 def get_platform_api_id(struct):
+
     return str(struct.get(FIELD_PLATFORM_API_ID, EMPTY))
 
 
 def get_platform_auth_key(struct):
+
     return str(struct.get(FIELD_PLATFORM_AUTH_KEY, EMPTY))
 
 
 def get_token(struct):
+
     return str(struct.get(FIELD_TOKEN, EMPTY))
 
 
@@ -195,7 +217,6 @@ def get_t(struct):
 
     try:
         t = int(struct.get(FIELD_T, 0))
-
     except (ValueError, TypeError) as _:
         t = 0
 
@@ -216,6 +237,7 @@ def get_fields_as_lists_or_nones(struct):
     
     Возвращает кортеж (field_0, field_r, field_c, field_z).
     """
+
     field_names = (
         FIELD_0,
         FIELD_R,
@@ -250,6 +272,7 @@ def get_fields_as_dictionaries_or_nones(struct):
     
     Возвращает кортеж (field_0, field_r, field_c, field_z).
     """
+
     field_names_fns = {
         FIELD_0: lambda x: x,
         FIELD_R: lambda x: max(helpers.try_int(x), 0),
@@ -261,6 +284,7 @@ def get_fields_as_dictionaries_or_nones(struct):
     if isinstance(struct, dict):
 
         def yield_field_fn_existence():
+
             for field_name, fn in field_names_fns.items():
                 is_field_exists = field_name in struct
                 field = struct[field_name] if is_field_exists else {}
@@ -279,17 +303,21 @@ def get_fields_as_dictionaries_or_nones(struct):
 
 
 def _get_field_0_value(struct, field_name, field_type, default):
+
     try:
         d = struct.get(FIELD_0, {})
         value = field_type(d.get(field_name, default))
     except (AttributeError, ValueError, TypeError) as _:
         value = default
+
     return value
 
 
 def get_player_id(struct):
+
     return _get_field_0_value(struct, PLAYER_ID, int, 0)
 
 
 def get_level(struct):
+
     return _get_field_0_value(struct, PLAYER_LEVEL, int, 0)

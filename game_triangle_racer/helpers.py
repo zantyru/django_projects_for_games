@@ -9,25 +9,31 @@ _STAMP_MSEC_PRECISION_INV = 1.0 / _STAMP_MSEC_PRECISION
 
 
 def datetime_now_utc():
+
     return datetime.now(timezone.utc)
 
 
 def default_random_string():
+
     return uuid1().hex
 
 
 def get_request_referrer_domain(request):
+
     referrer = request.headers.get('Referer', '')  #@NOTE 'Referer' with single letter 'r'!
     match = re.match(r'(?:https?://)?([\w\d\-\.]+)(?::\d+)?(?:/\S*)?', referrer)
     domain = match.group(1) if match is not None else ''
+
     return domain
 
 
 def datetime_to_stamp(dt):
+
     return int(dt.timestamp() * _STAMP_MSEC_PRECISION)
 
 
 def stamp_to_datetime(s):
+
     return datetime.utcfromtimestamp(s * _STAMP_MSEC_PRECISION_INV)
 
 
@@ -38,6 +44,7 @@ def stringify(struct):
     Важно: порядок элементов в списках и словарях не важен - они сортируются
     для обеспечения стабильности подписи независимо от порядка передачи.
     """
+
     def _(w):
         list_of_strings = []
 
@@ -45,12 +52,10 @@ def stringify(struct):
             # Сортируем элементы списка для стабильности подписи
             strings = (','.join(_(e)) for e in sorted(w, key=str))
             list_of_strings.extend(['[', *sorted(strings, key=str), ']'])
-
         elif isinstance(w, dict):
             # Сортируем ключи словаря для стабильности подписи
             strings = (f'{k}={",".join(_(w[k]))}' for k in sorted(w.keys(), key=str))
             list_of_strings.extend(sorted(strings))
-
         else:
             list_of_strings.append(str(w))
 
@@ -66,7 +71,9 @@ def try_int(value, default=0, base=10):
     Сначала пытается преобразовать как строку с указанным основанием,
     затем как обычное число. В случае ошибки возвращает значение по умолчанию.
     """
+
     if isinstance(value, int):
+
         return value
     
     try:
@@ -76,6 +83,7 @@ def try_int(value, default=0, base=10):
             result = int(value)
         except (ValueError, TypeError):
             result = default
+
     return result
 
 

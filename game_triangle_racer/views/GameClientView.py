@@ -33,7 +33,6 @@ class GameClientView(View):
         if referrer_domain == 'vk.com':
             logger.info(f'"{referrer_domain}" is permitted domain.')
             response = _make_response_for_vk(request)
-
         else:
             logger.warning(f'"{referrer_domain}" is NOT permitted domain!')
             response = HttpResponse()
@@ -43,9 +42,12 @@ class GameClientView(View):
 
 def _make_response_for_vk(request):
     """Формирует ответ для VK платформы."""
+
     vk_app_secure_key = settings.VK_APP_SECURE_KEY
+
     if not vk_app_secure_key:
         logger.error('VK_APP_SECURE_KEY не настроен в settings.')
+
         return HttpResponse()
 
     urlvars_as_dict = request.GET.dict()
@@ -56,11 +58,10 @@ def _make_response_for_vk(request):
     if helpers.is_vk_session_valid(urlvars_as_dict, vk_app_secure_key) and helpers.try_int(platform_id) > 0:
 
         logger.info(f'Запрос принят: VK сессия валидна. Пользователь {platform_id}.')
-
         stamp = helpers.datetime_to_stamp(helpers.datetime_now_utc())
 
         with transaction.atomic():
-            # Используем select_for_update для защиты от race conditions при создании игрока
+            # Используем select_for_update для защиты от race conditions при создании
             player = Player.objects.filter(
                 platform=platform,
                 platform_id=platform_id
@@ -75,10 +76,12 @@ def _make_response_for_vk(request):
                 )
 
                 player_resources = []
+
                 for row in ConfigOfInitialPlayerResource.objects.all().iterator():
                     player_resources.append(
                         PlayerResource(player=player, resource=row.resource, count=row.initial_count)
                     )
+
                 if player_resources:
                     try:
                         PlayerResource.objects.bulk_create(player_resources)
@@ -98,9 +101,7 @@ def _make_response_for_vk(request):
         )
 
     else:
-
         logger.warning('Запрос отклонён: VK сессия не валидна.')
-
         response = HttpResponse()
 
     return response

@@ -59,6 +59,7 @@ class PullAPI(BaseJsonSignedAPIView):
 
     def handle_request(self, data, player, *args, **kwargs):
         """Обрабатывает запрос на получение данных игрока."""
+
         (
             input_fields_0,
             input_fields_r,
@@ -80,6 +81,7 @@ class PullAPI(BaseJsonSignedAPIView):
         )
 
         logger.info(f'Запрос на получение данных выполнен для игрока game_id={player.game_id}.')
+
         return response
 
     @staticmethod
@@ -89,9 +91,11 @@ class PullAPI(BaseJsonSignedAPIView):
             return None
 
         output_fields_0 = {}
+
         for e in input_fields_0:
             if e == interdata.PLAYER_LEVEL:
                 output_fields_0[e] = player.level
+
         output_fields_0[interdata.PLAYER_ID] = player.game_id  # Always available for game client
 
         return output_fields_0
@@ -99,6 +103,7 @@ class PullAPI(BaseJsonSignedAPIView):
     @staticmethod
     def read_player_resources(player, input_fields_r):
         """Читает ресурсы игрока одним запросом."""
+
         if input_fields_r is None:
             return None
 
@@ -116,6 +121,7 @@ class PullAPI(BaseJsonSignedAPIView):
     @staticmethod
     def read_player_costumes(player, input_fields_c):
         """Читает костюмы игрока. Если список пуст ([]), возвращает все костюмы."""
+
         if input_fields_c is None:
             return None
 
@@ -125,7 +131,6 @@ class PullAPI(BaseJsonSignedAPIView):
                 player=player,
                 costume__name__in=input_fields_c
             ).select_related('costume')
-
             costume_names = {pc.costume.name for pc in player_costumes}
             output_fields_c = {name: name in costume_names for name in input_fields_c}
         else:
@@ -138,6 +143,7 @@ class PullAPI(BaseJsonSignedAPIView):
     @staticmethod
     def read_player_timers(player, input_fields_z):
         """Читает таймеры игрока. Обновляет их состояние и удаляет истёкшие."""
+
         if input_fields_z is None:
             return None
 
@@ -156,6 +162,7 @@ class PullAPI(BaseJsonSignedAPIView):
 
                 for player_timer in player_timers:
                     player_timer.update()
+
                     if player_timer.state == PlayerTimer.State.EXPIRED:
                         timers_to_delete.append(player_timer.pk)
                     elif player_timer.state != PlayerTimer.State.PLANNED:
@@ -165,11 +172,13 @@ class PullAPI(BaseJsonSignedAPIView):
                 # Пакетные операции
                 if timers_to_update:
                     PlayerTimer.objects.bulk_update(timers_to_update, ['state', 'remaining', 'start_datetime'])
+
                 if timers_to_delete:
                     PlayerTimer.objects.filter(pk__in=timers_to_delete).delete()
 
                 # Добавляем нули для запрошенных, но не найденных таймеров
                 found_names = {pt.timer.name for pt in player_timers}
+
                 for name in input_fields_z:
                     if name not in found_names:
                         output_fields_z[name] = 0
@@ -185,6 +194,7 @@ class PullAPI(BaseJsonSignedAPIView):
 
                 for player_timer in player_timers:
                     player_timer.update()
+
                     if player_timer.state == PlayerTimer.State.EXPIRED:
                         timers_to_delete.append(player_timer.pk)
                     else:
@@ -193,6 +203,7 @@ class PullAPI(BaseJsonSignedAPIView):
                 # Пакетные операции
                 if timers_to_update:
                     PlayerTimer.objects.bulk_update(timers_to_update, ['state', 'remaining', 'start_datetime'])
+
                 if timers_to_delete:
                     PlayerTimer.objects.filter(pk__in=timers_to_delete).delete()
 

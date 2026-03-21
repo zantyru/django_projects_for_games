@@ -6,6 +6,7 @@ class PlayerTimer(models.Model):
     """Таймер игрока для отслеживания кулдаунов и восстановления ресурсов."""
 
     class State(models.IntegerChoices):
+
         PLANNED = (1, 'Запланирован')
         WORKING = (2, 'Работает')
         EXPIRED = (3, 'Истёк')
@@ -20,6 +21,7 @@ class PlayerTimer(models.Model):
     )
 
     class Meta:
+
         constraints = (
             models.UniqueConstraint(fields=('player', 'timer'), name='unique_player_timer'),
         )
@@ -29,10 +31,12 @@ class PlayerTimer(models.Model):
         ]
 
     def __str__(self):
+
         return f"{self.player.game_id} - {self.timer.name} ({self.get_state_display()})"
 
     def update(self):
         """Обновляет состояние таймера на основе текущего времени."""
+
         utcnow = helpers.datetime_now_utc()
         utcrun = self.start_datetime
 
@@ -41,6 +45,7 @@ class PlayerTimer(models.Model):
             durat_ms = self.timer.duration
 
             d = durat_ms - delta_ms
+
             if d > 0:
                 self.state = PlayerTimer.State.WORKING
                 self.remaining = d

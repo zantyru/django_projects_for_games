@@ -9,4 +9,5 @@ class Costume(models.Model):
     image_url = models.URLField()
 
     def __str__(self):
+
         return self.name

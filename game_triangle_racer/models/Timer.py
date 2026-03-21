@@ -9,4 +9,5 @@ class Timer(models.Model):
     duration = models.PositiveIntegerField(default=0, help_text="Длительность в миллисекундах")
 
     def __str__(self):
+
         return self.name

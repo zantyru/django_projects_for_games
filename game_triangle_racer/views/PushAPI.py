@@ -59,6 +59,7 @@ class PushAPI(BaseJsonSignedAPIView):
 
     def handle_request(self, data, player, *args, **kwargs):
         """Обрабатывает запрос на обновление данных игрока."""
+
         (
             input_fields_0,
             input_fields_r,
@@ -80,10 +81,12 @@ class PushAPI(BaseJsonSignedAPIView):
             )
 
             logger.info(f'Запрос на обновление данных выполнен для игрока game_id={player.game_id}.')
+
         except ValueError as e:
             # Ошибка валидации
             logger.warning(f'Ошибка валидации для игрока {player.game_id}: {e}')
             response = interdata.create_validation_error(str(e))
+
         except IntegrityError as e:
             # Ошибка целостности БД
             logger.error(f'Ошибка целостности БД для игрока {player.game_id}: {e}')
@@ -95,17 +98,21 @@ class PushAPI(BaseJsonSignedAPIView):
     @staticmethod
     def update_player_common_data(player, input_fields_0):
         """Обновляет общие данные игрока (уровень и т.п.)."""
+
         if input_fields_0 is None:
             return
 
         updated = False
+
         for k, v in input_fields_0.items():
             if k == interdata.PLAYER_LEVEL:
                 # Валидация уровня
                 is_valid, error_message = validators.validate_level(v)
+
                 if not is_valid:
                     logger.warning(f'Невалидный уровень {v} для игрока {player.game_id}: {error_message}')
                     raise ValueError(error_message)
+
                 player.level = v
                 updated = True
 
@@ -115,6 +122,7 @@ class PushAPI(BaseJsonSignedAPIView):
     @staticmethod
     def update_player_resources(player, input_fields_r):
         """Обновляет ресурсы игрока. Оптимизировано для пакетного сохранения."""
+
         if input_fields_r is None:
             return
 
@@ -142,6 +150,7 @@ class PushAPI(BaseJsonSignedAPIView):
 
             # Валидация количества ресурса
             is_valid, error_message = validators.validate_resource_count(count)
+
             if not is_valid:
                 logger.warning(f'Невалидное количество ресурса {resource_name}={count} для игрока {player.game_id}: {error_message}')
                 raise ValueError(f'Ресурс "{resource_name}": {error_message}')
@@ -161,8 +170,10 @@ class PushAPI(BaseJsonSignedAPIView):
         try:
             if resources_to_update:
                 PlayerResource.objects.bulk_update(resources_to_update, ['count'])
+
             if resources_to_create:
                 PlayerResource.objects.bulk_create(resources_to_create)
+
         except IntegrityError as e:
             logger.error(f'Ошибка при bulk операциях с ресурсами для игрока {player.game_id}: {e}')
             raise
@@ -170,6 +181,7 @@ class PushAPI(BaseJsonSignedAPIView):
     @staticmethod
     def update_player_costumes(player, input_fields_c):
         """Обновляет костюмы игрока. True - добавить/оставить, False - удалить."""
+
         if input_fields_c is None:
             return
 
@@ -209,8 +221,10 @@ class PushAPI(BaseJsonSignedAPIView):
         try:
             if costumes_to_create:
                 PlayerCostume.objects.bulk_create(costumes_to_create)
+
             if costumes_to_delete:
                 PlayerCostume.objects.filter(pk__in=costumes_to_delete).delete()
+
         except IntegrityError as e:
             logger.error(f'Ошибка при bulk операциях с костюмами для игрока {player.game_id}: {e}')
             raise

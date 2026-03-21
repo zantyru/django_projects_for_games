@@ -20,36 +20,42 @@ from game_triangle_racer.models import (
 # ConfigOfInitialPlayerResourceAdmin
 
 class ConfigOfInitialPlayerResourceAdmin(ModelAdmin):
+
     list_display = ('resource', 'initial_count', )
 
 
 # ConfigOfInitialPlayerCostumeAdmin
 
 class ConfigOfInitialPlayerCostumeAdmin(ModelAdmin):
+
     list_display = ('costume', )
 
 
 # PlayerAdmin
 
 class PlayerResourceInline(TabularInline):
+
     model = PlayerResource
     fields = ('resource', 'count', )
     extra = 0
 
 
 class PlayerCostumeInline(TabularInline):
+
     model = PlayerCostume
     fields = ('costume', )
     extra = 0
 
 
 class PlayerTimerInline(TabularInline):
+
     model = PlayerTimer
     fields = ('timer', 'start_datetime', 'remaining', )
     extra = 0
 
 
 class PlayerAdmin(ModelAdmin):
+
     list_display = ('game_id', 'platform', 'platform_id', )
     list_filter = ('platform', )
 
@@ -93,22 +99,26 @@ class PlayerAdmin(ModelAdmin):
 # TimerAdmin
 
 class TimerAdmin(ModelAdmin):
+
     list_display = ('name', 'duration', )
 
 
 # ShopSetAdmin
 
 class ShopPriceComponentInline(TabularInline):
+
     model = ShopPriceComponent
     extra = 0
 
 
 class ShopSetComponentInline(TabularInline):
+
     model = ShopSetComponent
     extra = 0
 
 
 class ShopSetAdmin(ModelAdmin):
+
     list_display = ('name', )
     #list_filter = ('price', )
 

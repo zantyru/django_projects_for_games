@@ -17,15 +17,19 @@ class StartAPI(APIView):
 
     def post(self, request, *args, **kwargs):
         """Обрабатывает запрос на начало сессии."""
+
         if request.content_type != 'application/json':
             logger.warning('Запрос отклонён: требуется JSON.')
             response = interdata.create_only_json_allowed_error()
+
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
         data = interdata.from_json(request.body)
+
         if not data:
             logger.warning('Запрос отклонён: некорректный JSON.')
             response = interdata.create_wrong_json_error()
+
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
         platform = interdata.get_platform(data)
@@ -33,6 +37,7 @@ class StartAPI(APIView):
         logger.info(f'Запрос на начало сессии от платформы \'{platform}\': {safe_data}')
 
         response = interdata.create_just_failure()
+
         if platform == 'vk.com':
             response = self._make_response_for_vk(data)
 
@@ -40,9 +45,12 @@ class StartAPI(APIView):
 
     def _make_response_for_vk(self, data):
         """Обрабатывает запрос от VK платформы."""
+
         vk_app_secure_key = settings.VK_APP_SECURE_KEY
+
         if not vk_app_secure_key:
             logger.error('VK_APP_SECURE_KEY не настроен в settings.')
+
             return interdata.create_just_failure()
 
         response = interdata.create_just_failure()
@@ -93,9 +101,13 @@ class StartAPI(APIView):
     @staticmethod
     def _mask_sensitive_data(data):
         """Маскирует чувствительные данные в логах."""
+
         if isinstance(data, dict):
             masked = data.copy()
+
             if 'platformAuthKey' in masked:
                 masked['platformAuthKey'] = '***'
+
             return masked
+
         return data

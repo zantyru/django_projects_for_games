@@ -8,4 +8,5 @@ class ConfigOfInitialPlayerResource(models.Model):
     initial_count = models.PositiveIntegerField(default=0, help_text="Начальное количество ресурса")
 
     def __str__(self):
+
         return f"Начальное '{self.resource.name}' x {self.initial_count}"

@@ -144,12 +144,14 @@ class ShopAPI(BaseJsonSignedAPIView):
             response = interdata.create_just_failure()
 
         logger.info(f'Запрос к магазину выполнен для игрока game_id={player.game_id}, действие: {action}.')
+
         return response
 
     @staticmethod
     def show_all():
         """Возвращает все наборы магазина с оптимизацией запросов."""
         # Оптимизация: предзагрузка компонентов одним запросом
+
         shop_sets_qs = ShopSet.objects.prefetch_related(
             'shopsetcomponent_set__resource'
         ).all()
@@ -181,6 +183,7 @@ class ShopAPI(BaseJsonSignedAPIView):
     @staticmethod
     def show_some(n_from_id, n_to_id):
         """Возвращает наборы магазина в указанном диапазоне с оптимизацией запросов."""
+
         shop_sets_qs = ShopSet.objects.prefetch_related('shopsetcomponent_set__resource')
         shop_sets_count = shop_sets_qs.count()
 
@@ -222,4 +225,5 @@ class ShopAPI(BaseJsonSignedAPIView):
 
     @staticmethod
     def buy(n_id):
+
         pass
