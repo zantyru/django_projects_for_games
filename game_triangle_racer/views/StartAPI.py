@@ -56,8 +56,8 @@ class StartAPI(APIView):
         response = interdata.create_just_failure()
 
         platform = interdata.get_platform(data)
-        platform_id = interdata.get_platform_id(data)
-        platform_api_id = interdata.get_platform_api_id(data)
+        platform_id = interdata.get_platform_id(data) or 0
+        platform_api_id = interdata.get_platform_api_id(data) or 0
         platform_auth_key = interdata.get_platform_auth_key(data)
 
         d = {
