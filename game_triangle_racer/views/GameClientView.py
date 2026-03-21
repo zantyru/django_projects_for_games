@@ -51,11 +51,14 @@ def _make_response_for_vk(request):
         return HttpResponse()
 
     urlvars_as_dict = request.GET.dict()
-
     platform = 'vk.com'
-    platform_id = urlvars_as_dict.get('viewer_id', 0)
+    platform_id = helpers.try_int(urlvars_as_dict.get('viewer_id', 0))
+    is_vk_session_valid = (
+        (helpers.is_vk_session_valid(urlvars_as_dict, vk_app_secure_key) and platform_id > 0)
+        or settings.BYPASS_PLATFORM_SESSION_VALIDATION_FOR_DEBUG
+    )
 
-    if helpers.is_vk_session_valid(urlvars_as_dict, vk_app_secure_key) and helpers.try_int(platform_id) > 0:
+    if is_vk_session_valid:
 
         logger.info(f'Запрос принят: VK сессия валидна. Пользователь {platform_id}.')
         stamp = helpers.datetime_to_stamp(helpers.datetime_now_utc())

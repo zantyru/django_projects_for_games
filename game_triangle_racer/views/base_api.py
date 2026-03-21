@@ -53,8 +53,12 @@ class BaseJsonSignedAPIView(APIView):
 
         # Проверка подписи
         session_quasisecret = str(player.session_quasisecret)
+        is_data_signed_well = (
+            interdata.is_signed_well(data, session_quasisecret)
+            or settings.BYPASS_REQUEST_SIGNATURE_VALIDATION_FOR_DEBUG
+        )
 
-        if not interdata.is_signed_well(data, session_quasisecret):
+        if not is_data_signed_well:
             logger.warning(
                 f'Запрос отклонён: неверная подпись для игрока {player.game_id}.'
             )

@@ -66,7 +66,12 @@ class StartAPI(APIView):
             helpers.FIELD_NAME_VK_AUTH_KEY: platform_auth_key,
         }
 
-        if helpers.is_vk_session_valid(d, vk_app_secure_key):
+        is_vk_session_valid = (
+            helpers.is_vk_session_valid(d, vk_app_secure_key)
+            or settings.BYPASS_PLATFORM_SESSION_VALIDATION_FOR_DEBUG
+        )
+
+        if is_vk_session_valid:
             with transaction.atomic():
                 # Используем select_for_update для защиты от race conditions
                 player = Player.objects.filter(
