@@ -1,16 +1,12 @@
 import logging
 from django.conf import settings
 from django.db import transaction
-from django.db.utils import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.generic import View
 from django.views.decorators.clickjacking import xframe_options_exempt
 from game_triangle_racer import helpers
-from game_triangle_racer.models import (
-    Player, Resource, Costume, PlayerResource, PlayerCostume,
-    ConfigOfInitialPlayerResource, ConfigOfInitialPlayerCostume
-)
+from game_triangle_racer.models import Player
 
 
 logger = logging.getLogger(__name__)
