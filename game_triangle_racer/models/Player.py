@@ -1,8 +1,17 @@
 import os
 import base64
+import logging
 from datetime import timedelta
 from django.db import models
+from django.db.utils import IntegrityError
 from game_triangle_racer import helpers
+from game_triangle_racer.models import (
+    PlayerResource,
+    ConfigOfInitialPlayerResource
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 class Player(models.Model):
@@ -100,3 +109,28 @@ class Player(models.Model):
             return None
 
         return Player.get_player_by_token(token)
+
+    @staticmethod
+    def create_and_get_new_player(platform, platform_id, regin_stamp):
+
+        player = Player.objects.create(
+            platform=platform,
+            platform_id=platform_id,
+            regin_stamp=regin_stamp
+        )
+
+        player_resources = []
+
+        for row in ConfigOfInitialPlayerResource.objects.all().iterator():
+            player_resources.append(
+                PlayerResource(player=player, resource=row.resource, count=row.initial_count)
+            )
+
+        if player_resources:
+            try:
+                PlayerResource.objects.bulk_create(player_resources)
+            except IntegrityError as e:
+                logger.error(f'Ошибка при создании начальных ресурсов для игрока {player.platform_id}: {e}')
+                raise
+
+        return player

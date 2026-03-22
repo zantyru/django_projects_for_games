@@ -72,25 +72,7 @@ def _make_response_for_vk(request):
 
             if not player:
                 logger.info(f'Пользователь {platform_id} - новый игрок. Регистрация...')
-                player = Player.objects.create(
-                    platform=platform,
-                    platform_id=platform_id,
-                    regin_stamp=stamp
-                )
-
-                player_resources = []
-
-                for row in ConfigOfInitialPlayerResource.objects.all().iterator():
-                    player_resources.append(
-                        PlayerResource(player=player, resource=row.resource, count=row.initial_count)
-                    )
-
-                if player_resources:
-                    try:
-                        PlayerResource.objects.bulk_create(player_resources)
-                    except IntegrityError as e:
-                        logger.error(f'Ошибка при создании начальных ресурсов для игрока {player.platform_id}: {e}')
-                        raise
+                player = Player.create_and_get_new_player(platform, platform_id, stamp)
 
             player.login_stamp = stamp
             player.save(update_fields=['login_stamp'])
