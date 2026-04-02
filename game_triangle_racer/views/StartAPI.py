@@ -73,14 +73,20 @@ class StartAPI(APIView):
 
         if is_vk_session_valid:
             with transaction.atomic():
+                start_stamp = helpers.datetime_to_stamp(helpers.datetime_now_utc())
+
                 # Используем select_for_update для защиты от race conditions
                 player = Player.objects.filter(
                     platform=platform,
                     platform_id=platform_id
                 ).select_for_update().first()
 
+                # Если разрешено, то новый игрок будет создан, даже если
+                # игровой клиент не веб-приложение, а, например, десктопное
+                if not player and settings.PLAYER_REGISTRATION_AT_START_API_FOR_DEBUG:
+                    player = Player.create_and_get_new_player(platform, platform_id, start_stamp)
+
                 if player:
-                    start_stamp = helpers.datetime_to_stamp(helpers.datetime_now_utc())
                     response = interdata.create_by_extending(
                         interdata.create_just_success(),
                         **{
