@@ -5,10 +5,8 @@ from datetime import timedelta
 from django.db import models
 from django.db.utils import IntegrityError
 from game_triangle_racer import helpers
-from game_triangle_racer.models import (
-    PlayerResource,
-    ConfigOfInitialPlayerResource
-)
+from game_triangle_racer.models.PlayerResource import PlayerResource
+from game_triangle_racer.models.ConfigOfInitialPlayerResource import ConfigOfInitialPlayerResource
 
 
 logger = logging.getLogger(__name__)
@@ -119,7 +117,7 @@ class Player(models.Model):
             regin_stamp=regin_stamp
         )
 
-        player_resources = []
+        player_resources = []; print(PlayerResource)
 
         for row in ConfigOfInitialPlayerResource.objects.all().iterator():
             player_resources.append(

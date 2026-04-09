@@ -138,7 +138,7 @@ class ShopAPI(BaseJsonSignedAPIView):
             response = self.show_some(n_from_id, n_to_id)
         elif action == 'buy':
             n_id = helpers.try_int(data.get('id', -1), -1)
-            response = self.buy(n_id)
+            response = self.buy(player, n_id)
         else:
             logger.warning(f'Неизвестное действие магазина: {action}')
             response = interdata.create_just_failure()
@@ -152,15 +152,19 @@ class ShopAPI(BaseJsonSignedAPIView):
         """Возвращает все наборы магазина с оптимизацией запросов."""
         # Оптимизация: предзагрузка компонентов одним запросом
 
-        shop_sets_qs = ShopSet.objects.prefetch_related(
-            'shopsetcomponent_set__resource'
-        ).all()
+        shop_sets_qs = ShopSet.objects.prefetch_related('shopsetcomponent_set__resource').all()
 
         shop_sets = [
             {
                 "id": shop_set.id,
                 "name": shop_set.name,
-                "price": shop_set.price,
+                "price": [
+                    {
+                        "name": price.resource.name,
+                        "count": price.count,
+                    }
+                    for price in shop_set.shoppricecomponent_set.all()
+                ],
                 "components": [
                     {
                         "name": component.resource.name,
@@ -201,7 +205,13 @@ class ShopAPI(BaseJsonSignedAPIView):
             {
                 "id": shop_set.id,
                 "name": shop_set.name,
-                "price": shop_set.price,
+                "price": [
+                    {
+                        "name": price.resource.name,
+                        "count": price.count,
+                    }
+                    for price in shop_set.shoppricecomponent_set.all()
+                ],
                 "components": [
                     {
                         "name": component.resource.name,
@@ -224,6 +234,6 @@ class ShopAPI(BaseJsonSignedAPIView):
         )
 
     @staticmethod
-    def buy(n_id):
+    def buy(player, n_id):
 
         pass
