@@ -117,7 +117,7 @@ class Player(models.Model):
             regin_stamp=regin_stamp
         )
 
-        player_resources = []; print(PlayerResource)
+        player_resources = []; print(PlayerResource) #@DEBUG
 
         for row in ConfigOfInitialPlayerResource.objects.all().iterator():
             player_resources.append(

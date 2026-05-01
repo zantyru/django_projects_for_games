@@ -1,6 +1,9 @@
 import logging
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db import transaction
+from django.db.models import F
 from game_triangle_racer import helpers
-from game_triangle_racer.models import Player, ShopSet, ShopSetComponent
+from game_triangle_racer.models import Player, PlayerResource, ShopSet, ShopSetComponent
 from game_triangle_racer.views import interdata
 from game_triangle_racer.views.base_api import BaseJsonSignedAPIView
 
@@ -104,7 +107,11 @@ logger = logging.getLogger(__name__)
 #     "purchase": {
 #         "id": 4
 #         "name": "<shop set 4 name>",
-#         "price": 1234,
+#         "price": [
+#             {"name": "<shop price component 1 name>", "count": 5},
+#             {"name": "<shop price component 2 name>", "count": 10},
+#             ...,
+#         ],
 #         "components": [
 #             {"name": "<shop set component 1 name>", "count": 23},
 #             {"name": "<shop set component 2 name>", "count": 34},
@@ -236,4 +243,82 @@ class ShopAPI(BaseJsonSignedAPIView):
     @staticmethod
     def buy(player, n_id):
 
-        pass
+        response = interdata.create_just_failure()
+        can_buy = True
+
+        try:
+            shop_set = ShopSet.objects.get(pk=n_id)
+            price_resources = shop_set.shoppricecomponent_set.all()
+            player_resources = player.resources.all()
+
+            # Проверка возможности покупки
+            with transaction.atomic():
+                for price_resource in price_resources.iterator():
+                    player_resource = player_resources.get(resource=price_resource.resource)
+
+                    if player_resource.count < price_resource.count:
+                        can_buy = False
+                        break
+
+            if can_buy:
+                with transaction.atomic():
+                    # Передача игроку купленных ресурсов
+                    purchased_resources = shop_set.shopsetcomponent_set.all()
+
+                    for purchased_resource in purchased_resources.iterator():
+                        player_resource = player_resources.filter(
+                            resource=purchased_resource.resource
+                        ).select_for_update().first()
+
+                        if player_resource:
+                            player_resource.update(count=F("count") + purchased_resource.count)
+                        else:
+                            player_resource = PlayerResource(
+                                player=player, resource=purchased_resource.resource, count=purchased_resource.count
+                            )
+                            player_resource.save()
+
+                    # Оплата игроком покупки
+                    for price_resource in price_resources.iterator():
+                        player_resource = player_resources.get(resource=price_resource.resource)
+                        player_resource.update(count=F("count") - price_resource.count)
+
+                response = interdata.create_by_extending(
+                    interdata.create_just_success(),
+                    **{
+                        "purchase": {
+                            "id": shop_set.id,
+                            "name": shop_set.name,
+                            "price": [
+                                {
+                                    "name": price.resource.name,
+                                    "count": price.count,
+                                }
+                                for price in shop_set.shoppricecomponent_set.all()
+                            ],
+                            "components": [
+                                {
+                                    "name": component.resource.name,
+                                    "count": component.count,
+                                }
+                                for component in shop_set.shopsetcomponent_set.all()
+                            ],
+                        },
+                    }
+                )
+
+        except ObjectDoesNotExist:
+            can_buy = False
+
+        except MultipleObjectsReturned:
+            can_buy = False
+
+        if not can_buy:
+            response = interdata.create_by_extending(
+                interdata.create_just_failure(),
+                **{
+                    "purchase": {},
+                }
+            )
+
+        return response
