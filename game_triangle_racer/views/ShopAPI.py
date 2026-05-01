@@ -249,7 +249,7 @@ class ShopAPI(BaseJsonSignedAPIView):
         try:
             shop_set = ShopSet.objects.get(pk=n_id)
             price_resources = shop_set.shoppricecomponent_set.all()
-            player_resources = player.resources.all()
+            player_resources = player.playerresource_set.all()
 
             # Проверка возможности покупки
             with transaction.atomic():
@@ -280,7 +280,7 @@ class ShopAPI(BaseJsonSignedAPIView):
 
                     # Оплата игроком покупки
                     for price_resource in price_resources.iterator():
-                        player_resource = player_resources.get(resource=price_resource.resource)
+                        player_resource = player_resources.get(resource=price_resource)
                         player_resource.update(count=F("count") - price_resource.count)
 
                 response = interdata.create_by_extending(
