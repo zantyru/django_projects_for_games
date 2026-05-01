@@ -280,7 +280,7 @@ class ShopAPI(BaseJsonSignedAPIView):
 
                     # Оплата игроком покупки
                     for price_resource in price_resources.iterator():
-                        player_resource = player_resources.get(resource=price_resource)
+                        player_resource = player_resources.get(resource=price_resource.resource)
                         player_resource.update(count=F("count") - price_resource.count)
 
                 response = interdata.create_by_extending(
