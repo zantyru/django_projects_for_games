@@ -271,17 +271,19 @@ class ShopAPI(BaseJsonSignedAPIView):
                         ).select_for_update().first()
 
                         if player_resource:
-                            player_resource.update(count=F("count") + purchased_resource.count)
+                            player_resource.count = F("count") + purchased_resource.count
                         else:
                             player_resource = PlayerResource(
                                 player=player, resource=purchased_resource.resource, count=purchased_resource.count
                             )
-                            player_resource.save()
+
+                        player_resource.save()
 
                     # Оплата игроком покупки
                     for price_resource in price_resources.iterator():
                         player_resource = player_resources.get(resource=price_resource.resource)
-                        player_resource.update(count=F("count") - price_resource.count)
+                        player_resource.count = F("count") - price_resource.count
+                        player_resource.save()
 
                 response = interdata.create_by_extending(
                     interdata.create_just_success(),
